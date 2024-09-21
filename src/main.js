@@ -69,6 +69,16 @@ function initGame() {
   k.loadSprite("heart", "https://kaboomjs.com/sprites/heart.png");
   k.loadSprite("powerup", "https://kaboomjs.com/sprites/egg.png");
 
+  k.loadSound("death", "sounds/death.wav");
+  k.loadSound("egg", "sounds/egg.wav");
+  k.loadSound("health", "sounds/health.wav");
+  k.loadSound("jump", "sounds/jump.wav");
+
+  const gotoGameOver = () => {
+    k.play("death");
+    k.go("gameOver");
+  };
+
   // Define game scene
   k.scene("game", () => {
     // Set up gravity
@@ -113,6 +123,7 @@ function initGame() {
     function jump() {
       if (player.isGrounded()) {
         player.jump(JUMP_FORCE);
+        k.play("jump");
       }
     }
 
@@ -219,7 +230,7 @@ function initGame() {
     // Collision detection
     k.onCollide("player", "enemy", () => {
       if (!isImmune) {
-        // k.go("gameOver");
+        gotoGameOver();
       }
     });
 
@@ -283,6 +294,7 @@ function initGame() {
       k.destroy(h);
       health = Math.min(health + 10, 100);
       updateHealth();
+      k.play("health");
     });
 
     // Collect power-ups
@@ -291,6 +303,7 @@ function initGame() {
       isImmune = true;
       immuneTimer = 5;
       player.opacity = 0.5; // Make player semi-transparent when immune
+      k.play("egg");
     });
 
     // Update immunity timer and health depletion
@@ -309,7 +322,7 @@ function initGame() {
         updateHealth();
         healthDepletionTimer = 0;
         if (health <= 0) {
-          // k.go("gameOver");
+          gotoGameOver();
         }
       }
 
@@ -389,7 +402,7 @@ function initGame() {
     // Check if player or enemy falls off the screen
     k.onUpdate(() => {
       if (player.pos.y >= k.height() || enemy.pos.y >= k.height()) {
-        // k.go("gameOver");
+        gotoGameOver();
       }
     });
   });
