@@ -64,15 +64,15 @@ function initGame() {
   });
 
   // Load assets
-  k.loadSprite("player", "https://kaboomjs.com/sprites/bean.png");
-  k.loadSprite("enemy", "https://kaboomjs.com/sprites/ghosty.png");
-  k.loadSprite("heart", "https://kaboomjs.com/sprites/heart.png");
-  k.loadSprite("powerup", "https://kaboomjs.com/sprites/egg.png");
+  k.loadSprite("player", "assets/sprites/bean.png");
+  k.loadSprite("enemy", "assets/sprites/ghosty.png");
+  k.loadSprite("heart", "assets/sprites/heart.png");
+  k.loadSprite("powerup", "assets/sprites/egg.png");
 
-  k.loadSound("death", "sounds/death.wav");
-  k.loadSound("egg", "sounds/egg.wav");
-  k.loadSound("health", "sounds/health.wav");
-  k.loadSound("jump", "sounds/jump.wav");
+  k.loadSound("death", "assets/sounds/death.wav");
+  k.loadSound("egg", "assets/sounds/egg.wav");
+  k.loadSound("health", "assets/sounds/health.wav");
+  k.loadSound("jump", "assets/sounds/jump.wav");
 
   const gotoGameOver = () => {
     k.play("death");
