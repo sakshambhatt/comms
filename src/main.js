@@ -3,8 +3,8 @@ import kaboom from "kaboom";
 // Initialize kaboom context
 kaboom({
   global: true,
-  width: 800,
-  height: 600,
+  width: window.innerWidth,
+  height: window.innerHeight,
   scale: 1,
   debug: true,
 });
