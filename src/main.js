@@ -317,7 +317,7 @@ function initGame() {
       }
 
       healthDepletionTimer += k.dt();
-      if (healthDepletionTimer >= 10) {
+      if (healthDepletionTimer >= 2.5) {
         health = Math.max(health - 10, 0);
         updateHealth();
         healthDepletionTimer = 0;
