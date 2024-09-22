@@ -92,6 +92,39 @@ function initGame() {
   k.loadSound("health", "assets/sounds/health.wav");
   k.loadSound("jump", "assets/sounds/jump.wav");
 
+  // Start screen scene
+  k.scene("start", () => {
+    k.add([k.rect(k.width(), k.height()), k.color(0, 200, 255)]);
+
+    k.add([
+      k.text("Score more than 99 to reveal the secret!", {
+        size: 24,
+        width: k.width() - 100,
+      }),
+      k.pos(k.width() / 2, k.height() / 3),
+      k.anchor("center"),
+      k.color(255, 255, 255),
+    ]);
+
+    const startButton = k.add([
+      k.rect(200, 60),
+      k.pos(k.width() / 2, (k.height() * 2) / 3),
+      k.anchor("center"),
+      k.color(0, 255, 0),
+      k.area(),
+    ]);
+
+    startButton.add([
+      k.text("Start Game", { size: 24 }),
+      k.anchor("center"),
+      k.color(0, 0, 0),
+    ]);
+
+    startButton.onClick(() => {
+      k.go("game");
+    });
+  });
+
   const gotoGameOver = () => {
     k.play("death");
     k.go("gameOver");
@@ -99,6 +132,14 @@ function initGame() {
 
   // Define game scene
   k.scene("game", () => {
+    // Reset game variables
+    health = 100;
+    isImmune = false;
+    immuneTimer = 0;
+    healthDepletionTimer = 0;
+    score = 0;
+    scoreTimer = 0;
+
     // Set up gravity
     k.setGravity(1600);
 
@@ -152,10 +193,10 @@ function initGame() {
 
     // Touch controls for mobile
     if (isMobile) {
-      const buttonSize = Math.min(k.width(), k.height()) * 0.2; // Slightly smaller buttons
-      const buttonGap = buttonSize * 1.2; // Gap between buttons
-      const leftOffset = k.width() * 0.05; // Move controls to the right
-      const topOffset = 70; // Place buttons below health and immunity displays
+      const buttonSize = Math.min(k.width(), k.height()) * 0.2;
+      const buttonGap = buttonSize * 1.2;
+      const leftOffset = k.width() * 0.05;
+      const topOffset = 70;
 
       let touchingLeft = false;
       let touchingRight = false;
@@ -235,24 +276,6 @@ function initGame() {
       });
     }
 
-    k.onUpdate(() => {
-      // score updation
-      scoreTimer += k.dt();
-      if (scoreTimer >= 1) {
-        score++;
-        scoreText.text = `Score: ${score}`;
-        scoreTimer = 0;
-      }
-
-      // Enemy AI to chase the player and jump
-      const dir = player.pos.sub(enemy.pos).unit();
-      enemy.move(dir.scale(ENEMY_SPEED));
-
-      if (enemy.isGrounded() && Math.random() < 0.02) {
-        enemy.jump(ENEMY_JUMP_FORCE);
-      }
-    });
-
     // Collision detection
     k.onCollide("player", "enemy", () => {
       if (!isImmune) {
@@ -313,7 +336,40 @@ function initGame() {
       k.wait(k.rand(3, 6), enemySpawn);
     }
 
-    enemySpawn();
+    // Display score, health and immunity timer
+    const scoreText = k.add([k.text("Score: 0"), k.pos(30, 10), k.scale(0.5)]);
+
+    const healthText = k.add([
+      k.text("Health: 100"),
+      k.pos(150, 10),
+      k.scale(0.5),
+      k.color(k.rgb(0, 255, 0)),
+    ]);
+
+    const immuneText = k.add([k.text(""), k.pos(30, 30), k.scale(0.5)]);
+
+    function updateScore() {
+      scoreText.text = `Score: ${score}`;
+    }
+
+    function updateHealth() {
+      healthText.text = `Health: ${health}`;
+      if (health <= 30) {
+        healthText.color = k.rgb(255, 0, 0);
+      } else if (health <= 60) {
+        healthText.color = k.rgb(255, 165, 0);
+      } else {
+        healthText.color = k.rgb(0, 255, 0);
+      }
+    }
+
+    function updateImmuneTimer() {
+      if (isImmune) {
+        immuneText.text = `Immune: ${immuneTimer.toFixed(1)}s`;
+      } else {
+        immuneText.text = "";
+      }
+    }
 
     // Collect hearts
     k.onCollide("player", "heart", (p, h) => {
@@ -323,7 +379,7 @@ function initGame() {
       k.play("health");
 
       score++; // Add 1 point for heart collision
-      scoreText.text = `Score: ${score}`;
+      updateScore();
     });
 
     // Collect power-ups
@@ -335,7 +391,7 @@ function initGame() {
       k.play("egg");
 
       score += 5; // Add 5 points for egg collision
-      scoreText.text = `Score: ${score}`;
+      updateScore();
     });
 
     // Update immunity timer and health depletion
@@ -379,45 +435,16 @@ function initGame() {
           k.destroy(p);
         }
       });
-    });
 
-    // Display score, health and immunity timer
-    const scoreText = k.add([k.text("Score: 0"), k.pos(30, 10), k.scale(0.5)]);
-
-    const healthText = k.add([
-      k.text("Health: 100"),
-      k.pos(150, 10),
-      k.scale(0.5),
-      k.color(k.rgb(0, 255, 0)),
-    ]);
-
-    const immuneText = k.add([k.text(""), k.pos(30, 30), k.scale(0.5)]);
-
-    function updateScore() {
-      scoreText.text = `Score: ${score}`;
-    }
-
-    function updateHealth() {
-      healthText.text = `Health: ${health}`;
-      if (health <= 30) {
-        healthText.color = k.rgb(255, 0, 0);
-      } else if (health <= 60) {
-        healthText.color = k.rgb(255, 165, 0);
-      } else {
-        healthText.color = k.rgb(0, 255, 0);
-      }
-    }
-
-    function updateImmuneTimer() {
-      if (isImmune) {
-        immuneText.text = `Immune: ${immuneTimer.toFixed(1)}s`;
-      } else {
-        immuneText.text = "";
-      }
-    }
-
-    k.onUpdate(() => {
       updateImmuneTimer();
+
+      // Enemy AI to chase the player and jump
+      const dir = player.pos.sub(enemy.pos).unit();
+      enemy.move(dir.scale(ENEMY_SPEED));
+
+      if (enemy.isGrounded() && Math.random() < 0.02) {
+        enemy.jump(ENEMY_JUMP_FORCE);
+      }
     });
 
     // Add left and right boundaries
@@ -443,7 +470,9 @@ function initGame() {
     player.onUpdate(() => {
       if (player.pos.x < 20) player.pos.x = 20;
       if (player.pos.x > k.width() - 20) player.pos.x = k.width() - 20;
-      if (player.pos.y < 0) player.pos.y = 0;
+      if (player.pos.y > k.height()) {
+        gotoGameOver();
+      }
     });
 
     // Check if player or enemy falls off the screen
@@ -452,18 +481,40 @@ function initGame() {
         gotoGameOver();
       }
     });
+
+    // Make sure to call these functions to set up the initial state
+    updateScore();
+    updateHealth();
+    enemySpawn();
   });
 
-  // Game over scene
   // Game over scene
   k.scene("gameOver", () => {
     k.add([k.rect(k.width(), k.height()), k.color(0, 0, 0)]);
 
+    const suffix =
+      score > 99
+        ? "Revealing THE SECRET..."
+        : "Score more than 99 to reveal THE SECRET!";
     k.add([
-      k.text("Game Over!"),
+      k.text(`Game Over! ${suffix}`),
       k.pos(k.width() / 2, k.height() / 4),
       k.anchor("center"),
       k.scale(0.75),
+      k.color(255, 255, 255),
+    ]);
+
+    if (score > 99) {
+      setTimeout(() => {
+        window.open("https://www.youtube.com/watch?v=xMHJGd3wwZk", "_blank");
+      }, 2000);
+    }
+
+    k.add([
+      k.text("Press space or tap to restart"),
+      k.pos(k.width() / 2, (k.height() * 3) / 4),
+      k.anchor("center"),
+      k.scale(0.5),
       k.color(255, 255, 255),
     ]);
 
@@ -495,27 +546,19 @@ function initGame() {
       ]);
     });
 
-    k.add([
-      k.text("Press space or tap to restart"),
-      k.pos(k.width() / 2, (k.height() * 3) / 4),
-      k.anchor("center"),
-      k.scale(0.5),
-      k.color(255, 255, 255),
-    ]);
-
     k.onKeyPress("space", () => {
-      k.go("game");
-      health = 100;
-      score = 0;
+      k.go("start");
     });
 
     k.onClick(() => {
-      k.go("game");
-      health = 100;
-      score = 0;
+      k.go("start");
     });
   });
 
-  // Start the game
-  k.go("game");
+  // Start with the start screen
+  k.go("start");
 }
+
+// Check orientation on load and resize
+window.addEventListener("load", handleOrientation);
+window.addEventListener("resize", handleOrientation);
