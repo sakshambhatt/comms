@@ -52,6 +52,24 @@ let health = 100;
 let isImmune = false;
 let immuneTimer = 0;
 let healthDepletionTimer = 0;
+let score = 0;
+let scoreTimer = 0;
+
+// Function to get top scores from localStorage
+function getTopScores() {
+  const topScores = JSON.parse(localStorage.getItem("topScores")) || [0, 0, 0];
+  return topScores;
+}
+
+// Function to update top scores
+function updateTopScores(newScore) {
+  let topScores = getTopScores();
+  topScores.push(newScore);
+  topScores.sort((a, b) => b - a);
+  topScores = topScores.slice(0, 3);
+  localStorage.setItem("topScores", JSON.stringify(topScores));
+  return topScores;
+}
 
 // Function to initialize the game
 function initGame() {
@@ -217,8 +235,16 @@ function initGame() {
       });
     }
 
-    // Enemy AI to chase the player and jump
     k.onUpdate(() => {
+      // score updation
+      scoreTimer += k.dt();
+      if (scoreTimer >= 1) {
+        score++;
+        scoreText.text = `Score: ${score}`;
+        scoreTimer = 0;
+      }
+
+      // Enemy AI to chase the player and jump
       const dir = player.pos.sub(enemy.pos).unit();
       enemy.move(dir.scale(ENEMY_SPEED));
 
@@ -295,6 +321,9 @@ function initGame() {
       health = Math.min(health + 10, 100);
       updateHealth();
       k.play("health");
+
+      score++; // Add 1 point for heart collision
+      scoreText.text = `Score: ${score}`;
     });
 
     // Collect power-ups
@@ -304,10 +333,20 @@ function initGame() {
       immuneTimer = 5;
       player.opacity = 0.5; // Make player semi-transparent when immune
       k.play("egg");
+
+      score += 5; // Add 5 points for egg collision
+      scoreText.text = `Score: ${score}`;
     });
 
     // Update immunity timer and health depletion
     k.onUpdate(() => {
+      scoreTimer += k.dt();
+      if (scoreTimer >= 1) {
+        score++;
+        updateScore();
+        scoreTimer = 0;
+      }
+
       if (isImmune) {
         immuneTimer -= k.dt();
         if (immuneTimer <= 0) {
@@ -342,13 +381,21 @@ function initGame() {
       });
     });
 
-    // Display health and immunity timer
+    // Display score, health and immunity timer
+    const scoreText = k.add([k.text("Score: 0"), k.pos(30, 10), k.scale(0.5)]);
+
     const healthText = k.add([
       k.text("Health: 100"),
-      k.pos(50, 10),
+      k.pos(150, 10),
       k.scale(0.5),
+      k.color(k.rgb(0, 255, 0)),
     ]);
-    const immuneText = k.add([k.text(""), k.pos(50, 30), k.scale(0.5)]);
+
+    const immuneText = k.add([k.text(""), k.pos(30, 30), k.scale(0.5)]);
+
+    function updateScore() {
+      scoreText.text = `Score: ${score}`;
+    }
 
     function updateHealth() {
       healthText.text = `Health: ${health}`;
@@ -408,22 +455,64 @@ function initGame() {
   });
 
   // Game over scene
+  // Game over scene
   k.scene("gameOver", () => {
+    k.add([k.rect(k.width(), k.height()), k.color(0, 0, 0)]);
+
     k.add([
-      k.text(`Game Over!\nPress space or tap to restart`),
+      k.text("Game Over!"),
+      k.pos(k.width() / 2, k.height() / 4),
+      k.anchor("center"),
+      k.scale(0.75),
+      k.color(255, 255, 255),
+    ]);
+
+    const topScores = updateTopScores(score);
+
+    k.add([
+      k.text(`Your Score: ${score}`),
+      k.pos(k.width() / 2, k.height() / 2 - 50),
+      k.anchor("center"),
+      k.scale(0.5),
+      k.color(255, 255, 255),
+    ]);
+
+    k.add([
+      k.text("Top Scores:"),
       k.pos(k.width() / 2, k.height() / 2),
       k.anchor("center"),
       k.scale(0.5),
+      k.color(255, 255, 255),
+    ]);
+
+    topScores.forEach((topScore, index) => {
+      k.add([
+        k.text(`${index + 1}. ${topScore}`),
+        k.pos(k.width() / 2, k.height() / 2 + 30 + index * 30),
+        k.anchor("center"),
+        k.scale(0.5),
+        k.color(255, 255, 255),
+      ]);
+    });
+
+    k.add([
+      k.text("Press space or tap to restart"),
+      k.pos(k.width() / 2, (k.height() * 3) / 4),
+      k.anchor("center"),
+      k.scale(0.5),
+      k.color(255, 255, 255),
     ]);
 
     k.onKeyPress("space", () => {
       k.go("game");
       health = 100;
+      score = 0;
     });
 
     k.onClick(() => {
       k.go("game");
       health = 100;
+      score = 0;
     });
   });
 
