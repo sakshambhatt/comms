@@ -1,4 +1,5 @@
-import kaboom from "kaboom";
+import kaplay from "kaplay";
+import "kaplay/global";
 
 // Check if the device is mobile
 const isMobile =
@@ -73,7 +74,7 @@ function updateTopScores(newScore) {
 
 // Function to initialize the game
 function initGame() {
-  const k = kaboom({
+  const k = kaplay({
     global: true,
     width: window.innerWidth,
     height: window.innerHeight,
